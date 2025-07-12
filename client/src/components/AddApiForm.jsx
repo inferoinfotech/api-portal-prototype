@@ -1,26 +1,48 @@
-import { useState } from "react";
+"use client"
+
+import { useState } from "react"
+import { Button } from "./ui/button"
+import { Input } from "./ui/input"
+import { Label } from "./ui/label"
+import { Textarea } from "./ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { Badge } from "./ui/badge"
+import { X } from "lucide-react"
 
 export default function AddApiForm({ onSave, onCancel, initial }) {
-  const [name, setName] = useState("");
-  const [endpoint, setEndpoint] = useState("");
-  const [method, setMethod] = useState("GET");
-  const [description, setDescription] = useState("");
-  const [version, setVersion] = useState("1.0.0");
-  const [status, setStatus] = useState("active");
-  const [tags, setTags] = useState("");
-    const [openapiRaw, setOpenapiRaw] = useState(""); // for OpenAPI JSON input
+  const [name, setName] = useState(initial?.name || "")
+  const [endpoint, setEndpoint] = useState(initial?.endpoint || "")
+  const [method, setMethod] = useState(initial?.method || "GET")
+  const [description, setDescription] = useState(initial?.description || "")
+  const [version, setVersion] = useState(initial?.version || "1.0.0")
+  const [status, setStatus] = useState(initial?.status || "active")
+  const [tags, setTags] = useState(initial?.tags || [])
+  const [tagInput, setTagInput] = useState("")
+  const [openapiRaw, setOpenapiRaw] = useState(initial?.openapiSpec ? JSON.stringify(initial.openapiSpec, null, 2) : "")
 
- const handleSubmit = (e) => {
-    e.preventDefault();
-    let openapiSpec = undefined;
+  const addTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()])
+      setTagInput("")
+    }
+  }
+
+  const removeTag = (tagToRemove) => {
+    setTags(tags.filter((tag) => tag !== tagToRemove))
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    let openapiSpec = undefined
     if (openapiRaw.trim() !== "") {
       try {
-        openapiSpec = JSON.parse(openapiRaw);
+        openapiSpec = JSON.parse(openapiRaw)
       } catch {
-        alert("OpenAPI JSON is invalid!");
-        return;
+        alert("OpenAPI JSON is invalid!")
+        return
       }
     }
+
     onSave({
       name,
       endpoint,
@@ -28,40 +50,124 @@ export default function AddApiForm({ onSave, onCancel, initial }) {
       description,
       version,
       status,
-      tags: tags.split(",").map(t => t.trim()).filter(Boolean),
-      openapiSpec, // <-- send to backend
-    });
-  };
+      tags,
+      openapiSpec,
+    })
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 space-y-4 bg-white rounded shadow">
-      <h2 className="text-lg font-semibold">Add API</h2>
-      <input className="block w-full border px-3 py-2 rounded" placeholder="API Name" value={name} onChange={e => setName(e.target.value)} required />
-      <input className="block w-full border px-3 py-2 rounded" placeholder="Endpoint (e.g. /v1/resource)" value={endpoint} onChange={e => setEndpoint(e.target.value)} required />
-      <select className="block w-full border px-3 py-2 rounded" value={method} onChange={e => setMethod(e.target.value)}>
-        <option>GET</option>
-        <option>POST</option>
-        <option>PUT</option>
-        <option>DELETE</option>
-      </select>
-      <input className="block w-full border px-3 py-2 rounded" placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} />
-      <input className="block w-full border px-3 py-2 rounded" placeholder="Version" value={version} onChange={e => setVersion(e.target.value)} />
-      <select className="block w-full border px-3 py-2 rounded" value={status} onChange={e => setStatus(e.target.value)}>
-        <option value="active">Active</option>
-        <option value="deprecated">Deprecated</option>
-      </select>
-      <input className="block w-full border px-3 py-2 rounded" placeholder="Tags (comma separated)" value={tags} onChange={e => setTags(e.target.value)} />
-      <textarea
-        rows={5}
-        className="block w-full border px-3 py-2 rounded font-mono"
-        placeholder="Paste OpenAPI JSON here (optional)"
-        value={openapiRaw}
-        onChange={e => setOpenapiRaw(e.target.value)}
-      />
-      <div className="flex gap-2">
-        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Add</button>
-        <button type="button" onClick={onCancel} className="px-4 py-2 rounded border">Cancel</button>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">API Name</Label>
+          <Input
+            id="name"
+            placeholder="Enter API name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="method">Method</Label>
+          <Select value={method} onValueChange={setMethod}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="GET">GET</SelectItem>
+              <SelectItem value="POST">POST</SelectItem>
+              <SelectItem value="PUT">PUT</SelectItem>
+              <SelectItem value="DELETE">DELETE</SelectItem>
+              <SelectItem value="PATCH">PATCH</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="endpoint">Endpoint</Label>
+        <Input
+          id="endpoint"
+          placeholder="/api/v1/resource"
+          value={endpoint}
+          onChange={(e) => setEndpoint(e.target.value)}
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          placeholder="Enter API description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="version">Version</Label>
+          <Input id="version" placeholder="1.0.0" value={version} onChange={(e) => setVersion(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="status">Status</Label>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="deprecated">Deprecated</SelectItem>
+              <SelectItem value="beta">Beta</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Tags</Label>
+        <div className="flex space-x-2">
+          <Input
+            placeholder="Add tag"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
+          />
+          <Button type="button" onClick={addTag} variant="outline">
+            Add
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {tags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="flex items-center space-x-1">
+              <span>{tag}</span>
+              <X className="w-3 h-3 cursor-pointer" onClick={() => removeTag(tag)} />
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="openapi">OpenAPI Specification (Optional)</Label>
+        <Textarea
+          id="openapi"
+          placeholder="Paste OpenAPI JSON here..."
+          value={openapiRaw}
+          onChange={(e) => setOpenapiRaw(e.target.value)}
+          rows={8}
+          className="font-mono text-sm"
+        />
+      </div>
+
+      <div className="flex justify-end space-x-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit">{initial ? "Update" : "Create"} API</Button>
       </div>
     </form>
-  );
+  )
 }
