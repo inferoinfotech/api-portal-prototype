@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
@@ -10,15 +10,40 @@ import { Badge } from "./ui/badge"
 import { X } from "lucide-react"
 
 export default function AddApiForm({ onSave, onCancel, initial }) {
-  const [name, setName] = useState(initial?.name || "")
-  const [endpoint, setEndpoint] = useState(initial?.endpoint || "")
-  const [method, setMethod] = useState(initial?.method || "GET")
-  const [description, setDescription] = useState(initial?.description || "")
-  const [version, setVersion] = useState(initial?.version || "1.0.0")
-  const [status, setStatus] = useState(initial?.status || "active")
-  const [tags, setTags] = useState(initial?.tags || [])
+  const [name, setName] = useState("")
+  const [endpoint, setEndpoint] = useState("")
+  const [method, setMethod] = useState("GET")
+  const [description, setDescription] = useState("")
+  const [version, setVersion] = useState("1.0.0")
+  const [status, setStatus] = useState("active")
+  const [tags, setTags] = useState([])
   const [tagInput, setTagInput] = useState("")
-  const [openapiRaw, setOpenapiRaw] = useState(initial?.openapiSpec ? JSON.stringify(initial.openapiSpec, null, 2) : "")
+  const [openapiRaw, setOpenapiRaw] = useState("")
+
+  // Initialize form with initial values when component mounts or initial changes
+  useEffect(() => {
+    if (initial) {
+      setName(initial.name || "")
+      setEndpoint(initial.endpoint || "")
+      setMethod(initial.method || "GET")
+      setDescription(initial.description || "")
+      setVersion(initial.version || "1.0.0")
+      setStatus(initial.status || "active")
+      setTags(initial.tags || [])
+      setOpenapiRaw(initial.openapiSpec ? JSON.stringify(initial.openapiSpec, null, 2) : "")
+    } else {
+      // Reset form for new API
+      setName("")
+      setEndpoint("")
+      setMethod("GET")
+      setDescription("")
+      setVersion("1.0.0")
+      setStatus("active")
+      setTags([])
+      setTagInput("")
+      setOpenapiRaw("")
+    }
+  }, [initial])
 
   const addTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -72,7 +97,7 @@ export default function AddApiForm({ onSave, onCancel, initial }) {
           <Label htmlFor="method">Method</Label>
           <Select value={method} onValueChange={setMethod}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Select method" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="GET">GET</SelectItem>
@@ -116,7 +141,7 @@ export default function AddApiForm({ onSave, onCancel, initial }) {
           <Label htmlFor="status">Status</Label>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger>
-              <SelectValue />
+              <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="active">Active</SelectItem>

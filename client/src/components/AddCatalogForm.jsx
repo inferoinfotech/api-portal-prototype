@@ -1,15 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
 import { Textarea } from "./ui/textarea"
 
 export default function AddCatalogForm({ onSave, onCancel, initial }) {
-  const [name, setName] = useState(initial?.name || "")
-  const [description, setDescription] = useState(initial?.description || "")
-  const [color, setColor] = useState(initial?.color || "#3B82F6")
+  const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
+  const [color, setColor] = useState("#3B82F6")
+
+  // Initialize form with initial values when component mounts or initial changes
+  useEffect(() => {
+    if (initial) {
+      setName(initial.name || "")
+      setDescription(initial.description || "")
+      setColor(initial.color || "#3B82F6")
+    } else {
+      // Reset form for new catalog
+      setName("")
+      setDescription("")
+      setColor("#3B82F6")
+    }
+  }, [initial])
 
   const handleSubmit = (e) => {
     e.preventDefault()
