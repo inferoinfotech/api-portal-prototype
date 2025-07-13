@@ -1,12 +1,54 @@
 "use client"
 
+import { useRef, useState } from "react"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Badge } from "./ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
-import { Search, Plus, Book, Edit, Trash2, Code } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
+import { Search, Plus, Book, Edit, Trash2, Code, UploadCloud } from "lucide-react"
+import yaml from "js-yaml"
+import { importOpenapiCatalog } from "../api"
 
-export default function CatalogList({ catalogs, onSelect, onAddClick, search, setSearch, onEdit, onDelete }) {
+export default function CatalogList({ catalogs, onSelect, onAddClick, search, setSearch, onEdit, onDelete, onImported }) {
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [importError, setImportError] = useState("")
+  const [importing, setImporting] = useState(false)
+  const [importedFileName, setImportedFileName] = useState("")
+  const fileInputRef = useRef(null)
+
+  // OpenAPI file handler
+  const handleFileChange = async (e) => {
+    setImportError("")
+    setImporting(true)
+    const file = e.target.files[0]
+    if (!file) return
+
+    setImportedFileName(file.name)
+    const ext = file.name.split(".").pop().toLowerCase()
+    try {
+      const text = await file.text()
+      let spec
+      if (ext === "json") {
+        spec = JSON.parse(text)
+      } else if (ext === "yaml" || ext === "yml") {
+        spec = yaml.load(text)
+      } else {
+        setImportError("Only JSON or YAML files supported")
+        setImporting(false)
+        return
+      }
+      await importOpenapiCatalog({ openapiSpec: spec })
+      setShowImportDialog(false)
+      setImporting(false)
+      setImportedFileName("")
+      if (onImported) onImported()
+    } catch (err) {
+      setImportError("Failed to import: " + (err.message || "Unknown error"))
+      setImporting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
@@ -21,16 +63,57 @@ export default function CatalogList({ catalogs, onSelect, onAddClick, search, se
                 API Portal
               </h1>
             </div>
-            <Button
-              onClick={onAddClick}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Catalog
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={onAddClick} className="bg-gradient-to-r from-blue-600 to-purple-600">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Catalog
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowImportDialog(true)}
+                className="flex items-center"
+              >
+                <UploadCloud className="w-4 h-4 mr-2" />
+                Import OpenAPI
+              </Button>
+            </div>
           </div>
         </div>
       </header>
+
+      {/* OpenAPI Import Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import OpenAPI File</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="file"
+              accept=".json,.yaml,.yml"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              disabled={importing}
+            />
+            {importedFileName && (
+              <div className="text-xs text-gray-400">{importedFileName}</div>
+            )}
+            {importError && (
+              <div className="text-red-600 text-xs">{importError}</div>
+            )}
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowImportDialog(false)}
+                disabled={importing}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
