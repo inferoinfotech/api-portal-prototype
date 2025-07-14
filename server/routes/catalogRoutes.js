@@ -131,29 +131,45 @@ router.post('/:catalogId/apis/import', async (req, res) => {
 
 
 // Import OpenAPI file, create catalog, add all APIs
+// routes/catalogs.js
 router.post('/import', async (req, res) => {
   try {
-    const { openapiSpec } = req.body
+    const {
+      openapiSpec,
+      name,
+      description,
+      color,
+      visibility,
+      status,
+      accessRoles,
+      tags
+    } = req.body;
+
     if (!openapiSpec || !openapiSpec.info || !openapiSpec.paths) {
-      return res.status(400).json({ error: "OpenAPI spec missing info or paths." })
+      return res.status(400).json({ error: "OpenAPI spec missing info or paths." });
     }
 
-    // Use OpenAPI info as catalog name/desc
-    const info = openapiSpec.info
+    // Use OpenAPI info as fallback
+    const info = openapiSpec.info;
     const catalog = new Catalog({
-      name: info.title || "Imported API Catalog",
-      description: info.description || "",
-      color: "#3B82F6",
-      openapiSpec: openapiSpec,
-    })
-    await catalog.save()
+      name: name || info.title || "Imported API Catalog",
+      description: description || info.description || "",
+      color: color || "#3B82F6",
+      visibility: visibility || 'public',
+      status: status || 'active',
+      accessRoles: accessRoles && accessRoles.length ? accessRoles : ['admin'],
+      tags: tags && tags.length ? tags : [],
+      openapiSpec
+    });
 
-    // Save endpoints as APIs
-    const version = info.version || "1.0.0"
-    let newApis = []
+    await catalog.save();
+
+    // Save endpoints as APIs (same as before)
+    const version = info.version || "1.0.0";
+    let newApis = [];
     for (const path in openapiSpec.paths) {
       for (const method in openapiSpec.paths[path]) {
-        const operation = openapiSpec.paths[path][method]
+        const operation = openapiSpec.paths[path][method];
         const api = new Api({
           catalogId: catalog._id,
           name: operation.summary || operation.operationId || `${method.toUpperCase()} ${path}`,
@@ -163,17 +179,18 @@ router.post('/import', async (req, res) => {
           version,
           status: "active",
           tags: operation.tags || [],
-          openapiSpec // Save full spec for SwaggerUI, or you could save per-endpoint if you prefer
-        })
-        await api.save()
-        newApis.push(api)
+          openapiSpec
+        });
+        await api.save();
+        newApis.push(api);
       }
     }
 
-    res.status(201).json({ message: `Imported catalog and ${newApis.length} APIs`, catalog, apis: newApis })
+    res.status(201).json({ message: `Imported catalog and ${newApis.length} APIs`, catalog, apis: newApis });
   } catch (err) {
-    res.status(400).json({ error: err.message })
+    res.status(400).json({ error: err.message });
   }
-})
+});
+
 
 module.exports = router;
