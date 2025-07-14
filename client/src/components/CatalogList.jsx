@@ -64,17 +64,17 @@ export default function CatalogList({ catalogs, onSelect, onAddClick, search, se
               </h1>
             </div>
             <div className="flex gap-2">
-              <Button onClick={onAddClick} className="bg-gradient-to-r from-blue-600 to-purple-600">
+              {/* <Button onClick={onAddClick} className="bg-gradient-to-r from-blue-600 to-purple-600">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Catalog
-              </Button>
+              </Button> */}
               <Button
                 variant="outline"
                 onClick={() => setShowImportDialog(true)}
                 className="flex items-center"
               >
                 <UploadCloud className="w-4 h-4 mr-2" />
-                Import OpenAPI
+                Add Api
               </Button>
             </div>
           </div>
@@ -82,7 +82,7 @@ export default function CatalogList({ catalogs, onSelect, onAddClick, search, se
       </header>
 
       {/* OpenAPI Import Dialog */}
-      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog} className="max-w-lg mx-auto">
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Import OpenAPI File</DialogTitle>

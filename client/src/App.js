@@ -80,19 +80,19 @@ const handleSelectCatalog = async (catalog) => {
           />
 
           {/* Add Catalog Dialog */}
-          <AddCatalogForm
+          {/* <AddCatalogForm
             open={showAddCatalog}
             onSave={handleAddCatalog}
             onCancel={() => setShowAddCatalog(false)}
-          />
+          /> */}
 
           {/* Edit Catalog Dialog */}
-          <AddCatalogForm
+          {/* <AddCatalogForm
             open={!!editCatalogData}
             onSave={handleEditCatalog}
             onCancel={() => setEditCatalogData(null)}
             initial={editCatalogData}
-          />
+          /> */}
         </>
       )}
 
